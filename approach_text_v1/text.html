@@ -1,0 +1,167 @@
+<!--
+Code by Piotr Topa <pt@approach.pl>
+
+The MIT License
+
+Copyright &copy; 2010-2014 three.js authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+		@font-face {
+			font-family: 'JuraMedium';
+			src: url(./fonts/Jura-Medium.ttf);
+			font-style: normal;
+		}
+		@font-face {
+			font-family: 'JuraRegular';
+			src: url(./fonts/Jura-Regular.ttf);
+			font-style: normal;
+		}
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+            overflow: hidden;
+        }
+
+		#text {
+			position: absolute;
+			left: 5%;
+			top: 90%;
+			width: 90%;
+			font-size: 36px;
+			font-family: 'JuraRegular';
+			font-style: normal;
+			color: #000000;
+			background-color: #ffffff;
+			opacity: 0.65;
+			text-align: center;
+			line-height: 1.5em;
+		}
+    </style>
+</head>
+<body>
+		<script src="lib/jquery.js"></script>
+		<script src="lib/mockWebvfx.js"></script>
+
+
+	<div id="text"></div>
+
+	</div>
+	<script>
+		var renderer = {
+			params: {
+				text: '',
+				color: '#000',
+				bgColor: '#fff',
+				fontSize: 36,
+				opacity: 0.65,
+				posY: 90,
+			},
+
+			components: {},
+			
+			init: function (apiHandle) {				
+				var that = this;
+				that.webvfx = apiHandle;
+				that.components.text = $("#text");
+
+				that.webvfx.renderRequested.connect(window, function(time) {
+					that.render(time);
+				});
+				that.webvfx.readyRender(true);
+			},
+			
+			readParams: function () {
+				var that = this;
+				var changed = false;
+				var currentParams = {
+					text: that.webvfx.getStringParameter('text'),
+					color: that.webvfx.getStringParameter('color'),
+					bgColor: that.webvfx.getStringParameter('bgcolor'),
+					fontSize: that.webvfx.getNumberParameter('font-size'),
+					posY: that.webvfx.getNumberParameter('pos-y'),
+					opacity: (that.webvfx.getNumberParameter('opacity') / 100)
+				};
+
+				$.each(currentParams, function(index, value) {
+					if(value != that.params[index]) {
+						that.params[index] = value;
+						changed = true;
+					}
+				});
+				
+				if(changed) {
+					var text = that.components.text;
+					text.html(that.params.text);
+					text.css('color', that.params.color);
+					text.css('background-color', that.params.bgColor);
+					text.css('font-size', that.params.fontSize);
+					text.css('top', that.params.posY + "%");
+				}
+			},
+			
+			render: function (time) {
+				var that = this;
+				var text = that.components.text;
+				that.readParams();
+
+				if(0.2 >= time) {
+					var value = 5 * time;
+					text.css('opacity', that.easing(value) * (that.params.opacity));
+					text.css('transform', 'rotateY(' + (that.easing(1 - value) * 90) + 'deg)');
+				} else if(0.8 > time) {
+					text.css('opacity', that.params.opacity);
+					text.css('transform', 'rotateY(0)');
+				} else {
+					var value = 5 * (time - 0.8);
+					text.css('opacity', that.easing(1 - value) * (that.params.opacity));
+					text.css('transform', 'rotateY(' + (that.easing(value) * 90) + 'deg)');
+				}
+			},
+
+			easing: function(time) {
+				return Math.sin(time * (Math.PI / 2));
+			}
+		};
+
+		$(function() {
+			if('undefined' == typeof(webvfx)) {
+				mockWebvfx.params = {
+					text: 'Test text',
+					color: '#000',
+					bgColor: '#fff',
+					fontSize: 36,
+					posY: 90,
+					opacity: 0.65
+				};
+				webvfx = mockWebvfx;
+			}
+			renderer.init(webvfx);
+		});
+	</script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!--
+Code by Piotr Topa <pt@approach.pl>
+
+The MIT License
+
+Copyright &copy; 2010-2014 three.js authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+		@font-face {
+			font-family: 'NotoSansBold';
+			src: url(./fonts/NotoSans/NotoSans-Bold.ttf);
+		}
+
+		@font-face {
+			font-family: 'NotoSansRegular';
+			src: url(./fonts/NotoSans/NotoSans-Bold.ttf);
+		}
+
+		@font-face {
+			font-family: 'CuteFontRegular';
+			src: url(./fonts/CuteFont/CuteFont-Regular.ttf);
+		}
+
+		@font-face {
+			font-family: 'LobsterRegular';
+			src: url(./fonts/Lobster/Lobster-Regular.ttf);
+		}
+
+		@font-face {
+			font-family: 'RobotoCondensedBold';
+			src: url(./fonts/RobotoCondensed/RobotoCondensed-Bold.ttf);
+		}
+
+		@font-face {
+			font-family: 'RobotoCondensedBoldItalic';
+			src: url(./fonts/RobotoCondensed/RobotoCondensed-BoldItalic.ttf);
+		}
+
+		@font-face {
+			font-family: 'RobotoCondensedItalic';
+			src: url(./fonts/RobotoCondensed/RobotoCondensed-Italic.ttf);
+		}
+
+		@font-face {
+			font-family: 'RobotoCondensedRegular';
+			src: url(./fonts/RobotoCondensed/RobotoCondensed-Regular.ttf);
+		}
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+            overflow: hidden;
+        }
+
+		#canvas {
+			width: 100%;
+			height: 100%;
+			margin: 0;
+			padding: 0;
+		}
+    </style>
+</head>
+<body>
+	<script src="lib/jquery.js"></script>
+	<script src="lib/mockWebvfx.js"></script>
+
+	<canvas id="canvas"/>
+
+	<div style="opacity: 0">
+		<span style="font-family: 'NotoSansBold';"></span>
+		<span style="font-family: 'NotoSansRegular';"></span>
+		<span style="font-family: 'CuteFontRegular';"></span>
+		<span style="font-family: 'LobsterRegular';"></span>
+		<span style="font-family: 'RobotoCondensedBold';"></span>
+		<span style="font-family: 'RobotoCondensedBoldItalic';"></span>
+		<span style="font-family: 'RobotoCondensedItalic';"></span>
+		<span style="font-family: 'RobotoCondensedRegular';"></span>		
+	</div>
+
+	<script>
+		var renderer = {
+			params: {
+				text: 'Test Big Yyankee Qjgymt',
+				color: '#000000',
+				bgcolor: '#ffffff',
+				fontSize: 36,
+				fontFamily: 'NotoSansBold',
+				opacity: 1,
+				bgopacity: 0.5,
+				posY: 90,
+			},
+
+			components: {},
+			graphics:{},
+			
+			init: function (apiHandle) {				
+				var that = this;
+				that.webvfx = apiHandle;
+
+				that.components.canvas = document.getElementById('canvas');
+
+				that.graphics.text = {};
+				that.graphics.text.canvas = document.createElement('canvas');
+				that.graphics.text.canvas.width = document.body.clientWidth;
+				that.graphics.text.canvas.height = document.body.clientHeight;
+				that.graphics.text.context = that.graphics.text.canvas.getContext('2d');
+
+				that.graphics.box = {};
+				that.graphics.box.canvas = document.createElement('canvas');
+				that.graphics.box.canvas.width = document.body.clientWidth;
+				that.graphics.box.canvas.height = document.body.clientHeight;
+				that.graphics.box.context = that.graphics.box.canvas.getContext('2d');
+				
+				that.initTextBox();
+
+				that.webvfx.renderRequested.connect(window, function(time) {
+					that.render(time);
+				});
+				that.webvfx.readyRender(true);
+			},
+
+			initTextBox: function() {
+				var that = this;
+				
+				that.graphics.text.context.clearRect(0, 0, that.graphics.text.canvas.width, that.graphics.text.canvas.height);
+				that.graphics.box.context.clearRect(0, 0, that.graphics.box.canvas.width, that.graphics.box.canvas.height);
+
+				var color = that.hexToRgb(that.params.color);
+				var style = (that.params.fontFamily.indexOf('Italic') > -1) ? "italic" : "normal";
+				var shiftY = (that.params.fontFamily.indexOf('Cute') > -1) ? -0.3 : 0;
+				
+				var font = style + ' ' + that.params.fontSize + 'px ' + that.params.fontFamily;
+				var fillStyle = 'rgba(' + color.r + ', ' + color.g + ', ' + color.b + ', ' + that.params.opacity + ')';
+
+				that.graphics.text.context.fillStyle = "#000000";
+				that.graphics.text.context.font = font;				
+
+				that.graphics.text.size = {
+					width: that.graphics.text.context.measureText(that.params.text).width + that.params.fontSize,
+					height: (that.params.fontSize * 1.35) + (that.params.fontSize * shiftY * 1.30)
+				};
+
+				that.graphics.text.context.width = that.graphics.text.size.width;
+				that.graphics.text.context.height = that.graphics.text.size.height;
+				that.graphics.text.context.font = font;
+				that.graphics.text.context.fillText(that.params.text, (that.params.fontSize / 2), that.params.fontSize + (that.params.fontSize * shiftY));
+
+				that.graphics.box.context.width = that.graphics.text.size.width;
+				that.graphics.box.context.height = that.graphics.text.size.height;
+
+				that.graphics.box.context.fillStyle = fillStyle;
+				that.graphics.box.context.fillRect(0,0, that.graphics.text.size.width, that.graphics.text.size.height);
+				that.graphics.box.context.globalCompositeOperation="destination-out";
+				that.graphics.box.context.drawImage(that.graphics.text.canvas, 0, 0);
+				that.graphics.box.context.globalCompositeOperation="source-over";
+			},
+			
+			readParams: function () {
+				var that = this;
+				var changed = false;
+				var currentParams = {
+					text: that.webvfx.getStringParameter('text'),
+					color: that.webvfx.getStringParameter('color'),
+					bgcolor: that.webvfx.getStringParameter('bgcolor'),
+					fontFamily: that.webvfx.getStringParameter('font-family'),
+					fontSize: that.webvfx.getNumberParameter('font-size'),
+					posY: that.webvfx.getNumberParameter('pos-y'),
+					opacity: (that.webvfx.getNumberParameter('opacity') / 100),
+					bgopacity:  (that.webvfx.getNumberParameter('bgopacity') / 100)
+				};
+
+				$.each(currentParams, function(index, value) {
+					if(value != that.params[index]) {
+						that.params[index] = value;
+						changed = true;
+					}
+				});
+			},
+			
+			render: function (time) {
+				var that = this;
+				that.readParams();
+				that.initTextBox();
+
+				that.components.canvas.width = document.body.clientWidth;
+				that.components.canvas.height = document.body.clientHeight;
+				var posY = (that.components.canvas.height * (that.params.posY / 100)) - (that.graphics.text.size.height / 2);
+				var posX = (that.components.canvas.width / 2) - ( that.graphics.text.size.width / 2);
+				var sPosY = 0;
+				var sPosX = 0;
+				var sWidth = that.graphics.text.size.width;
+				var sHeight = that.graphics.text.size.height;
+
+				// prepare frame
+				var frameCtx = that.components.canvas.getContext('2d');
+				var frameImage = new Image();
+				webvfx.getImage("sourceImage").assignToHTMLImageElement(frameImage);
+				frameCtx.drawImage(frameImage, 0, 0);
+
+				// animation
+				if(time < 0.2 ) {
+					var value = 5 * time;
+					var animationWidth = Math.floor(that.easing(1 - value) * (sWidth / 2));
+					animationWidth += animationWidth % 2;
+					sPosX += animationWidth;
+					sWidth -= (animationWidth * 2);
+				} else if( time < 0.8 ) {
+					var color = that.hexToRgb(that.params.bgcolor);
+					var step = 1;
+					if( time < 0.3 ) {
+						step = ( time - 0.2 ) * 10;
+					} else if( time > 0.7 ) {
+						step = ( 0.8 - time ) * 10;
+					}
+					opacity = that.params.bgopacity * step;
+					var fillStyle = 'rgba(' + color.r + ', ' + color.g + ', ' + color.b + ', ' + opacity + ')';
+					frameCtx.fillStyle = fillStyle;
+					frameCtx.fillRect(0, 0, that.components.canvas.width, that.components.canvas.height);
+				} else if( time <= 1.0 ) {
+					var value = 5 * (time - 0.8);
+					var animationWidth = Math.floor(that.easing(value) * (sWidth / 2));
+					animationWidth += animationWidth % 2;
+					sPosX += animationWidth;
+					sWidth -= (animationWidth * 2);
+				}
+
+				// TODO blurring need either access to image data pixel (which is proibitet by CORS on local filesystem)
+				// or directly implemented bluring filters in canvas object.
+				
+				// draw text
+				frameCtx.drawImage(that.graphics.box.canvas, sPosX, sPosY, sWidth, sHeight, posX + sPosX, posY + sPosY, sWidth, sHeight);
+			},
+
+			easing: function(time) {
+				return Math.sin(time * (Math.PI / 2));
+			},
+
+			hexToRgb: function(hex) {
+    			var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+				return result ? {
+					r: parseInt(result[1], 16),
+					g: parseInt(result[2], 16),
+					b: parseInt(result[3], 16)
+				} : null;
+			}
+		};
+
+		$(function() {
+			if('undefined' == typeof(webvfx)) {
+				mockWebvfx.params = {
+					text: 'Test text Big yankee Issue',
+					color: '#ffffff',
+					bgcolor: '#000000',
+					opacity: 80,
+					bgopacity: 70
+				};
+				mockWebvfx.params['font-size'] = 72;
+				mockWebvfx.params['font-family'] = 'NotoSansBold';
+				mockWebvfx.params['pos-y'] = 50;
+
+				mockWebvfx.init();
+				webvfx = mockWebvfx;
+			}
+			webvfx.imageTypeMap = { "sourceImage" : webvfx.SourceImageType };
+			renderer.init(webvfx);
+		});
+	</script>
+</body>
+</html>
